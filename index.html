@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise de Sentimentos - MLOps Case</title>
+    <!-- Tailwind CSS para estilização rápida e moderna -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="max-w-xl w-full bg-slate-800 rounded-xl shadow-xl p-6 border border-slate-700">
+        <h1 class="text-2xl font-bold mb-2 text-center text-blue-400">Classificador de Sentimentos</h1>
+        <p class="text-sm text-slate-400 mb-6 text-center">Pipeline de NLP e Machine Learning em Produção</p>
+        
+        <div class="mb-4">
+            <label for="reviewText" class="block text-sm font-medium mb-2">Escreva o review do produto:</label>
+            <textarea id="reviewText" rows="4" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-slate-100 focus:outline-none focus:border-blue-500" placeholder="Ex: O produto chegou antes do prazo e a qualidade é excelente!"></textarea>
+        </div>
+        
+        <button onclick="analisarSentimento()" id="btnSubmit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+            Analisar Sentimento
+        </button>
+        
+        <div id="resultado" class="mt-6 hidden p-4 rounded-lg border transition-all">
+            <!-- O resultado da predição aparece dinamicamente aqui -->
+        </div>
+    </div>
+
+    <script>
+        async function analisarSentimento() {
+            const texto = document.getElementById('reviewText').value;
+            const btn = document.getElementById('btnSubmit');
+            const resDiv = document.getElementById('resultado');
+            
+            if (!texto.trim()) {
+                alert('Por favor, escreva um texto para análise.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Processando modelo...';
+            resDiv.classList.add('hidden');
+
+            // ⚠️ ATENÇÃO: Substitua por esta URL a da sua API pública (ex: Render)
+            // Para testes locais, pode manter 'http://localhost:8000/predict'
+            const API_URL = 'http://localhost:8000/predict'; 
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reviews: [texto] })
+                });
+
+                if (!response.ok) throw new Error('Erro na comunicação com o servidor.');
+
+                const data = await response.json();
+                const resultado = data.resultados[0];
+                
+                resDiv.classList.remove('hidden', 'bg-emerald-950', 'border-emerald-800', 'bg-rose-950', 'border-rose-800');
+                
+                if (resultado.sentimento === 'Positivo') {
+                    resDiv.classList.add('bg-emerald-950', 'border-emerald-800');
+                    resDiv.innerHTML = `<p class="text-emerald-400 font-bold text-lg">Sentimento: Positivo 🚀</p><p class="text-sm text-slate-300 mt-1">"${resultado.review}"</p>`;
+                } else {
+                    resDiv.classList.add('bg-rose-950', 'border-rose-800');
+                    resDiv.innerHTML = `<p class="text-rose-400 font-bold text-lg">Sentimento: Negativo ⚠️</p><p class="text-sm text-slate-300 mt-1">"${resultado.review}"</p>`;
+                }
+            } catch (error) {
+                alert('Erro ao conectar com a API. Verifique se o servidor está online e se aceita requisições externas (CORS).');
+                console.error(error);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Analisar Sentimento';
+            }
+        }
+    </script>
+</body>
+</html>
